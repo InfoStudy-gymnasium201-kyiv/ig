@@ -191,7 +191,7 @@
                         <i class="fa-solid fa-rocket mr-1"></i> Інтерактивні Місії
                     </span>
                     <h2 id="banner-title" class="text-2xl sm:text-3xl font-bold text-gradient-cyan">Виберіть урок</h2>
-                    <p id="banner-desc" class="text-slate-300 text-sm sm:text-base leading-relaxed">Вкажіть файл уроку в URL-адресі (наприклад, ?lesson=2627.6.5.json)</p>
+                    <p id="banner-desc" class="text-slate-300 text-sm sm:text-base leading-relaxed">Вкажіть номер уроку в URL-адресі (наприклад, ?lesson=2627.6.5)</p>
                 </div>
                 <div class="flex-shrink-0 relative">
                     <div class="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-gradient-to-tr from-sky-500/20 to-purple-500/20 border border-sky-400/30 flex items-center justify-center shadow-2xl relative animate-float">
@@ -350,29 +350,32 @@
     <script>
         const BASE_URL = 'https://raw.githubusercontent.com/InfoStudy-gymnasium201-kyiv/ig/refs/heads/main/Lesson/';
         
-        // Отримання параметра 'lesson' з URL.
+        // Отримання параметра 'lesson' з URL
         const urlParams = new URLSearchParams(window.location.search);
-        const JSON_FILE = urlParams.get('lesson');
+        let lessonParam = urlParams.get('lesson');
 
         let gameData = null;
 
         async function loadGameData() {
-            // Перевірка наявність параметра 'lesson'
-            if (!JSON_FILE) {
+            // Якщо параметр не вказаний
+            if (!lessonParam) {
                 document.getElementById('banner-title').innerText = "Урок не вказано";
-                document.getElementById('banner-desc').innerText = "Будь ласка, вкажіть параметр ?lesson=ім'я_файлу.json у посиланні.";
+                document.getElementById('banner-desc').innerText = "Будь ласка, вкажіть параметр ?lesson=номер_уроку у посиланні.";
                 document.getElementById('games-grid').innerHTML = `
                     <div class="glass-panel p-6 rounded-2xl text-center sm:col-span-2 text-rose-400 font-semibold border-rose-500/30">
                         <i class="fa-solid fa-triangle-exclamation text-3xl mb-2 block"></i>
-                        Файл уроку не вибрано.
+                        Урок не вибрано.
                     </div>
                 `;
                 return;
             }
 
+            // Автоматично додаємо .json, якщо користувач ввів лише назву/номер уроку
+            const jsonFileName = lessonParam.endsWith('.json') ? lessonParam : `${lessonParam}.json`;
+
             try {
-                const response = await fetch(BASE_URL + JSON_FILE);
-                if (!response.ok) throw new Error(`Помилка завантаження файлу: ${JSON_FILE}`);
+                const response = await fetch(BASE_URL + jsonFileName);
+                if (!response.ok) throw new Error(`Помилка завантаження файлу: ${jsonFileName}`);
                 gameData = await response.json();
                 
                 document.title = gameData.title || "ІТ-Космодром";
@@ -390,7 +393,7 @@
             } catch (error) {
                 console.error('Помилка завантаження даних:', error);
                 document.getElementById('banner-title').innerText = "Помилка завантаження";
-                document.getElementById('banner-desc').innerText = `Не вдалося завантажити файл ${JSON_FILE}. Перевірте правильність імені.`;
+                document.getElementById('banner-desc').innerText = `Не вдалося завантажити файл ${jsonFileName}. Перевірте правильність імені.`;
             }
         }
 
