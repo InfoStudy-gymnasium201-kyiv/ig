@@ -219,22 +219,22 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div id="drop-hardware" class="glass-panel p-6 rounded-3xl border-2 border-dashed border-sky-500/30 min-h-[220px] flex flex-col items-center justify-start space-y-3 transition-all duration-300">
+                <div id="drop-cat1" class="glass-panel p-6 rounded-3xl border-2 border-dashed border-sky-500/30 min-h-[220px] flex flex-col items-center justify-start space-y-3 transition-all duration-300">
                     <div class="flex items-center space-x-2 text-sky-400 font-bold text-lg">
                         <i id="g1-cat1-icon" class="fa-solid text-xl"></i>
                         <span id="g1-cat1-title">...</span>
                     </div>
                     <p id="g1-cat1-desc" class="text-xs text-slate-400 text-center">...</p>
-                    <div id="container-hardware" class="w-full flex flex-wrap gap-2 justify-center pt-2"></div>
+                    <div id="container-cat1" class="w-full flex flex-wrap gap-2 justify-center pt-2"></div>
                 </div>
 
-                <div id="drop-software" class="glass-panel p-6 rounded-3xl border-2 border-dashed border-purple-500/30 min-h-[220px] flex flex-col items-center justify-start space-y-3 transition-all duration-300">
+                <div id="drop-cat2" class="glass-panel p-6 rounded-3xl border-2 border-dashed border-purple-500/30 min-h-[220px] flex flex-col items-center justify-start space-y-3 transition-all duration-300">
                     <div class="flex items-center space-x-2 text-purple-400 font-bold text-lg">
                         <i id="g1-cat2-icon" class="fa-solid text-xl"></i>
                         <span id="g1-cat2-title">...</span>
                     </div>
                     <p id="g1-cat2-desc" class="text-xs text-slate-400 text-center">...</p>
-                    <div id="container-software" class="w-full flex flex-wrap gap-2 justify-center pt-2"></div>
+                    <div id="container-cat2" class="w-full flex flex-wrap gap-2 justify-center pt-2"></div>
                 </div>
             </div>
 
@@ -410,7 +410,7 @@
 
             [1, 2, 3, 4].forEach((id, idx) => {
                 const gKey = `g${id}`;
-                const gInfo = gameData.missions[gKey];
+                const gInfo = gameData.missions ? gameData.missions[gKey] : null;
                 if (!gInfo) return;
 
                 const st = styles[idx];
@@ -607,21 +607,29 @@
                 document.getElementById('g1-header-title').innerText = `${data.subtitle}: ${data.title}`;
                 document.getElementById('g1-header-desc').innerText = data.instruction;
 
-                document.getElementById('g1-cat1-title').innerText = data.categories.hardware.title;
-                document.getElementById('g1-cat1-desc').innerText = data.categories.hardware.desc;
-                document.getElementById('g1-cat1-icon').className = `fa-solid ${data.categories.hardware.icon} text-xl`;
+                // Універсальне отримання категорій
+                const catKeys = Object.keys(data.categories);
+                this.cat1Key = catKeys[0];
+                this.cat2Key = catKeys[1];
 
-                document.getElementById('g1-cat2-title').innerText = data.categories.software.title;
-                document.getElementById('g1-cat2-desc').innerText = data.categories.software.desc;
-                document.getElementById('g1-cat2-icon').className = `fa-solid ${data.categories.software.icon} text-xl`;
+                const cat1 = data.categories[this.cat1Key];
+                const cat2 = data.categories[this.cat2Key];
+
+                document.getElementById('g1-cat1-title').innerText = cat1.title;
+                document.getElementById('g1-cat1-desc').innerText = cat1.desc;
+                document.getElementById('g1-cat1-icon').className = `fa-solid ${cat1.icon} text-xl`;
+
+                document.getElementById('g1-cat2-title').innerText = cat2.title;
+                document.getElementById('g1-cat2-desc').innerText = cat2.desc;
+                document.getElementById('g1-cat2-icon').className = `fa-solid ${cat2.icon} text-xl`;
 
                 this.items = data.items;
                 this.solved = 0;
                 this.selectedCardIndex = null;
                 this.deck = shuffle([...this.items]);
                 
-                document.getElementById('container-hardware').innerHTML = '';
-                document.getElementById('container-software').innerHTML = '';
+                document.getElementById('container-cat1').innerHTML = '';
+                document.getElementById('container-cat2').innerHTML = '';
                 document.getElementById('g1-progress').innerText = `0 / ${this.items.length}`;
                 
                 this.renderDeck();
@@ -650,30 +658,33 @@
             },
 
             setupDropzones() {
-                ['hardware', 'software'].forEach(type => {
-                    const zone = document.getElementById(`drop-${type}`);
-                    zone.onclick = () => { if (this.selectedCardIndex !== null) this.checkAnswer(this.selectedCardIndex, type); };
+                [
+                    { zoneId: 'drop-cat1', key: this.cat1Key, targetName: 'cat1' },
+                    { zoneId: 'drop-cat2', key: this.cat2Key, targetName: 'cat2' }
+                ].forEach(({ zoneId, key, targetName }) => {
+                    const zone = document.getElementById(zoneId);
+                    zone.onclick = () => { if (this.selectedCardIndex !== null) this.checkAnswer(this.selectedCardIndex, key, targetName); };
                     zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('drag-active'); };
                     zone.ondragleave = () => zone.classList.remove('drag-active');
                     zone.ondrop = (e) => {
                         e.preventDefault(); zone.classList.remove('drag-active');
                         const idx = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                        if (!isNaN(idx)) this.checkAnswer(idx, type);
+                        if (!isNaN(idx)) this.checkAnswer(idx, key, targetName);
                     };
                 });
             },
 
-            checkAnswer(deckIdx, targetType) {
+            checkAnswer(deckIdx, expectedCategoryKey, targetName) {
                 const item = this.deck[deckIdx];
                 if (!item) return;
 
-                if (item.type === targetType) {
+                if (item.type === expectedCategoryKey) {
                     sound.playSuccess();
                     this.solved++;
                     
-                    const container = document.getElementById(`container-${targetType}`);
+                    const container = document.getElementById(`container-${targetName}`);
                     const badge = document.createElement('div');
-                    badge.className = `px-3 py-1.5 rounded-xl ${targetType === 'hardware' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : 'bg-purple-500/20 text-purple-300 border-purple-500/30'} border text-xs font-semibold flex items-center space-x-1.5 animate-glow`;
+                    badge.className = `px-3 py-1.5 rounded-xl ${targetName === 'cat1' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : 'bg-purple-500/20 text-purple-300 border-purple-500/30'} border text-xs font-semibold flex items-center space-x-1.5 animate-glow`;
                     badge.innerHTML = `<i class="fa-solid ${item.icon}"></i> <span>${item.text}</span>`;
                     container.appendChild(badge);
 
@@ -683,7 +694,7 @@
                     this.renderDeck();
                 } else {
                     sound.playError();
-                    const targetZone = document.getElementById(`drop-${targetType}`);
+                    const targetZone = document.getElementById(`drop-${targetName}`);
                     targetZone.classList.add('wrong-flash');
                     setTimeout(() => targetZone.classList.remove('wrong-flash'), 500);
                 }
@@ -819,9 +830,11 @@
                             this.solvedCount++;
                             document.getElementById('g3-progress').innerText = `${this.solvedCount} / ${this.pairs.length}`;
 
-                            const devCard = document.querySelector(`#g3-devices > div[data-name="${item.dev}"]`);
-                            devCard.classList.add('opacity-40', 'pointer-events-none');
-                            devCard.classList.remove('selected-card');
+                            const devCard = document.querySelector(`#g3-devices > div[data-name="${CSS.escape(item.dev)}"]`);
+                            if (devCard) {
+                                devCard.classList.add('opacity-40', 'pointer-events-none');
+                                devCard.classList.remove('selected-card');
+                            }
 
                             card.classList.add('opacity-40', 'pointer-events-none');
                             card.querySelector('i').className = 'fa-solid fa-circle-check text-emerald-400';
