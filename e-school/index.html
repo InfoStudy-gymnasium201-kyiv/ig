@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ІТ-Космодром</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts: Fredoka & Nunito -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBorder: '#2D3436',
+                        brandBg: '#EBF3FA'
+                    },
+                    fontFamily: {
+                        fredoka: ['Fredoka', 'sans-serif'],
+                        nunito: ['Nunito', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #EBF3FA;
+            background-image: radial-gradient(#CBD5E1 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+            color: #2D3436;
+            min-height: 100vh;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        h1, h2, h3, h4, .heading-font {
+            font-family: 'Fredoka', cursive;
+        }
+
+        /* Vector Elements Styling */
+        .vector-card {
+            background: #ffffff;
+            border: 3.5px solid #2D3436;
+            box-shadow: 5px 5px 0px #2D3436;
+            border-radius: 20px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .vector-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 7px 7px 0px #2D3436;
+        }
+
+        .vector-card:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 0px #2D3436;
+        }
+
+        .vector-btn {
+            border: 3px solid #2D3436;
+            box-shadow: 4px 4px 0px #2D3436;
+            border-radius: 16px;
+            font-weight: 800;
+            transition: all 0.1s ease;
+        }
+
+        .vector-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 6px 6px 0px #2D3436;
+        }
+
+        .vector-btn:active {
+            transform: translateY(2px);
+            box-shadow: 1px 1px 0px #2D3436;
+        }
+
+        .drop-zone {
+            border: 3.5px dashed #A0AEC0;
+            border-radius: 20px;
+            transition: all 0.2s ease;
+        }
+
+        .drag-active {
+            border-color: #6C5CE7 !important;
+            background-color: #F3E8FF !important;
+            transform: scale(1.02);
+        }
+
+        .selected-card {
+            border-color: #0984E3 !important;
+            background-color: #E0F2FE !important;
+            box-shadow: 0 0 0 4px #0984E3, 4px 4px 0px #2D3436 !important;
+            transform: scale(1.03);
+        }
+
+        .wrong-flash {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: #E17055 !important;
+            background-color: #FFEAA7 !important;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #E2E8F0;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94A3B8;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-3 sm:p-6 overflow-x-hidden">
+
+    <!-- HEADER BAR -->
+    <header class="max-w-6xl w-full mx-auto bg-white border-4 border-darkBorder rounded-2xl p-3 sm:p-4 shadow-[6px_6px_0px_#2D3436] flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="app.goHome()">
+            <div class="w-12 h-12 bg-yellow-400 border-3 border-darkBorder rounded-xl flex items-center justify-center text-2xl text-darkBorder shadow-[2px_2px_0px_#2D3436]">
+                <i class="fa-solid fa-rocket"></i>
+            </div>
+            <div>
+                <h1 id="app-header-title" class="heading-font text-xl sm:text-2xl font-bold text-slate-800 leading-tight">ІТ-КОСМОДРОМ</h1>
+                <p id="app-lesson-info" class="text-xs font-bold text-indigo-600 uppercase tracking-wider hidden sm:block">Очікування уроку...</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 sm:gap-4">
+            <!-- Score Counter -->
+            <div class="bg-amber-100 border-2 border-darkBorder px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl flex items-center gap-2 shadow-[2px_2px_0px_#2D3436]">
+                <span class="text-lg sm:text-xl text-amber-500"><i class="fa-solid fa-star"></i></span>
+                <span id="total-score" class="heading-font text-lg sm:text-xl font-bold text-amber-900 font-mono">0</span>
+            </div>
+
+            <!-- Sound Button -->
+            <button id="sound-btn" onclick="app.toggleSound()" class="vector-btn bg-sky-300 p-2 sm:p-2.5 text-slate-800 text-base sm:text-lg flex items-center justify-center">
+                <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+            </button>
+
+            <!-- Home Menu Button -->
+            <button onclick="app.goHome()" class="vector-btn bg-purple-400 hover:bg-purple-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-2 font-extrabold text-xs sm:text-sm">
+                <i class="fa-solid fa-house"></i> <span class="hidden sm:inline">Меню</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-6xl w-full mx-auto flex-1 flex flex-col justify-center">
+
+        <!-- VIEW 1: LEVEL SELECTOR HUB -->
+        <section id="view-hub" class="w-full space-y-6">
+            <div class="vector-card p-6 sm:p-8 bg-gradient-to-r from-indigo-100 via-sky-50 to-purple-100 border-4 border-darkBorder flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div class="space-y-2 text-center sm:text-left">
+                    <span id="banner-badge" class="inline-block px-3 py-1 rounded-full text-xs font-black bg-indigo-500 text-white border-2 border-darkBorder uppercase tracking-wider shadow-[2px_2px_0px_#2D3436]">
+                        <i class="fa-solid fa-rocket mr-1"></i> Інтерактивні Місії
+                    </span>
+                    <h2 id="banner-title" class="heading-font text-2xl sm:text-3xl font-black text-slate-800">Виберіть урок</h2>
+                    <p id="banner-desc" class="text-slate-600 font-bold text-sm sm:text-base leading-relaxed">Вкажіть номер уроку в URL-адресі (наприклад, ?lesson=2627.6.5)</p>
+                </div>
+                <div class="shrink-0">
+                    <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-yellow-400 border-4 border-darkBorder flex items-center justify-center text-4xl sm:text-5xl text-darkBorder shadow-[4px_4px_0px_#2D3436]">
+                        <i class="fa-solid fa-laptop-code"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-6"></div>
+        </section>
+
+        <!-- VIEW GAME 1 -->
+        <section id="view-game-1" class="hidden w-full space-y-4">
+            <div class="flex items-center justify-between bg-white border-3 border-darkBorder rounded-xl p-3 sm:p-4 shadow-[4px_4px_0px_#2D3436]">
+                <div>
+                    <h2 id="g1-header-title" class="heading-font text-lg sm:text-xl font-bold text-slate-800">...</h2>
+                    <p id="g1-header-desc" class="text-xs sm:text-sm font-bold text-slate-600">...</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="g1-progress" class="font-black text-indigo-600 text-sm sm:text-base font-mono">0 / 0</span>
+                    <button onclick="app.goHome()" class="vector-btn bg-slate-200 text-slate-800 px-3 py-1.5 text-xs">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Меню
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div id="drop-cat1" class="drop-zone p-6 bg-sky-50 min-h-[200px] flex flex-col items-center justify-start space-y-3 transition-all">
+                    <div class="flex items-center space-x-2 text-sky-800 font-extrabold text-lg">
+                        <i id="g1-cat1-icon" class="fa-solid text-xl"></i>
+                        <span id="g1-cat1-title" class="heading-font">...</span>
+                    </div>
+                    <p id="g1-cat1-desc" class="text-xs font-bold text-slate-500 text-center">...</p>
+                    <div id="container-cat1" class="w-full flex flex-wrap gap-2 justify-center pt-2"></div>
+                </div>
+
+                <div id="drop-cat2" class="drop-zone p-6 bg-purple-50 min-h-[200px] flex flex-col items-center justify-start space-y-3 transition-all">
+                    <div class="flex items-center space-x-2 text-purple-800 font-extrabold text-lg">
+                        <i id="g1-cat2-icon" class="fa-solid text-xl"></i>
+                        <span id="g1-cat2-title" class="heading-font">...</span>
+                    </div>
+                    <p id="g1-cat2-desc" class="text-xs font-bold text-slate-500 text-center">...</p>
+                    <div id="container-cat2" class="w-full flex flex-wrap gap-2 justify-center pt-2"></div>
+                </div>
+            </div>
+
+            <div class="vector-card p-5 bg-white flex flex-col items-center justify-center space-y-3">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-wider">Картка для сортування (натисни або перетягни):</span>
+                <div id="g1-deck" class="flex flex-wrap justify-center gap-3 min-h-[60px]"></div>
+            </div>
+        </section>
+
+        <!-- VIEW GAME 2 -->
+        <section id="view-game-2" class="hidden w-full space-y-4">
+            <div class="flex items-center justify-between bg-white border-3 border-darkBorder rounded-xl p-3 sm:p-4 shadow-[4px_4px_0px_#2D3436]">
+                <div>
+                    <h2 id="g2-header-title" class="heading-font text-lg sm:text-xl font-bold text-slate-800">...</h2>
+                    <p id="g2-header-desc" class="text-xs sm:text-sm font-bold text-slate-600">...</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="g2-progress" class="font-black text-purple-600 text-sm sm:text-base font-mono">0 / 0</span>
+                    <button onclick="app.goHome()" class="vector-btn bg-slate-200 text-slate-800 px-3 py-1.5 text-xs">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Меню
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-3">
+                    <h3 id="g2-left-header" class="text-xs font-black text-slate-400 uppercase tracking-wider">...</h3>
+                    <div id="g2-actions" class="space-y-3"></div>
+                </div>
+                <div class="space-y-3">
+                    <h3 id="g2-right-header" class="text-xs font-black text-slate-400 uppercase tracking-wider">...</h3>
+                    <div id="g2-targets" class="space-y-3"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW GAME 3 -->
+        <section id="view-game-3" class="hidden w-full space-y-4">
+            <div class="flex items-center justify-between bg-white border-3 border-darkBorder rounded-xl p-3 sm:p-4 shadow-[4px_4px_0px_#2D3436]">
+                <div>
+                    <h2 id="g3-header-title" class="heading-font text-lg sm:text-xl font-bold text-slate-800">...</h2>
+                    <p id="g3-header-desc" class="text-xs sm:text-sm font-bold text-slate-600">...</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="g3-progress" class="font-black text-emerald-600 text-sm sm:text-base font-mono">0 / 0</span>
+                    <button onclick="app.goHome()" class="vector-btn bg-slate-200 text-slate-800 px-3 py-1.5 text-xs">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Меню
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div id="g3-devices" class="grid grid-cols-1 gap-3"></div>
+                <div id="g3-measures" class="grid grid-cols-1 gap-3"></div>
+            </div>
+        </section>
+
+        <!-- VIEW GAME 4 (Глосарій) -->
+        <section id="view-game-4" class="hidden w-full space-y-4">
+            <div class="flex items-center justify-between bg-white border-3 border-darkBorder rounded-xl p-3 sm:p-4 shadow-[4px_4px_0px_#2D3436]">
+                <div>
+                    <h2 id="g4-header-title" class="heading-font text-lg sm:text-xl font-bold text-slate-800">...</h2>
+                    <p id="g4-header-desc" class="text-xs sm:text-sm font-bold text-slate-600">...</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="g4-progress" class="font-black text-amber-600 text-sm sm:text-base font-mono">0 / 0</span>
+                    <button onclick="app.goHome()" class="vector-btn bg-slate-200 text-slate-800 px-3 py-1.5 text-xs">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> Меню
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div id="g4-terms" class="space-y-3"></div>
+                <div id="g4-defs" class="space-y-3"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- VICTORY MODAL -->
+    <div id="victory-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="vector-card bg-white max-w-md w-full p-6 text-center space-y-5 border-4 border-darkBorder pop-in">
+            <div class="w-20 h-20 bg-yellow-300 border-4 border-darkBorder rounded-3xl mx-auto flex items-center justify-center text-4xl text-darkBorder shadow-[4px_4px_0px_#2D3436] animate-bounce">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            
+            <div class="space-y-1">
+                <h3 class="heading-font text-3xl font-black text-slate-800">Місію Виконано!</h3>
+                <p id="modal-desc" class="text-xs sm:text-sm text-slate-600 font-bold">Чудова робота! Ви чудово засвоїли матеріал уроку.</p>
+            </div>
+
+            <div class="bg-amber-50 border-2 border-darkBorder p-4 rounded-xl flex justify-around items-center">
+                <div>
+                    <span class="block text-xs font-black text-slate-400 uppercase">Набрано Балів</span>
+                    <span id="modal-score" class="heading-font text-2xl font-black text-amber-600 font-mono">+100</span>
+                </div>
+                <div class="w-0.5 h-8 bg-slate-300"></div>
+                <div>
+                    <span class="block text-xs font-black text-slate-400 uppercase">Точність</span>
+                    <span id="modal-accuracy" class="heading-font text-2xl font-black text-emerald-600 font-mono">100%</span>
+                </div>
+            </div>
+
+            <button onclick="app.closeVictoryModal()" class="vector-btn bg-green-400 hover:bg-green-500 text-slate-900 w-full py-3 text-base">
+                Продовжити <i class="fa-solid fa-forward ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="max-w-6xl w-full mx-auto text-center py-4 text-xs font-bold text-slate-500">
+        ІТ-Космодром • Інтерактивна навчальна платформа
+    </footer>
+
+    <script>
+        const BASE_URL = 'https://raw.githubusercontent.com/InfoStudy-gymnasium201-kyiv/ig/refs/heads/main/Lesson/';
+        
+        // Отримання параметра 'lesson' з URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let lessonParam = urlParams.get('lesson');
+
+        let gameData = null;
+
+        async function loadGameData() {
+            if (!lessonParam) {
+                document.getElementById('banner-title').innerText = "Урок не вказано";
+                document.getElementById('banner-desc').innerText = "Будь ласка, вкажіть параметр ?lesson=номер_уроку у посиланні.";
+                document.getElementById('games-grid').innerHTML = `
+                    <div class="vector-card p-6 bg-rose-100 text-center sm:col-span-2 text-rose-700 font-extrabold border-4 border-darkBorder">
+                        <i class="fa-solid fa-triangle-exclamation text-3xl mb-2 block"></i>
+                        Урок не вибрано.
+                    </div>
+                `;
+                return;
+            }
+
+            const jsonFileName = lessonParam.endsWith('.json') ? lessonParam : `${lessonParam}.json`;
+
+            try {
+                const response = await fetch(BASE_URL + jsonFileName);
+                if (!response.ok) throw new Error(`Помилка завантаження файлу: ${jsonFileName}`);
+                gameData = await response.json();
+                
+                document.title = gameData.title || "ІТ-Космодром";
+                document.getElementById('app-header-title').innerText = gameData.title || "ІТ-КОСМОДРОМ";
+                document.getElementById('app-lesson-info').innerText = gameData.lesson_info || "";
+                
+                if (gameData.banner) {
+                    document.getElementById('banner-badge').innerHTML = `<i class="fa-solid fa-rocket mr-1"></i> ${gameData.banner.badge}`;
+                    document.getElementById('banner-title').innerText = gameData.banner.title;
+                    document.getElementById('banner-desc').innerText = gameData.banner.description;
+                }
+
+                renderHubCards();
+
+            } catch (error) {
+                console.error('Помилка завантаження даних:', error);
+                document.getElementById('banner-title').innerText = "Помилка завантаження";
+                document.getElementById('banner-desc').innerText = `Не вдалося завантажити файл ${jsonFileName}. Перевірте правильність імені.`;
+            }
+        }
+
+        function renderHubCards() {
+            const grid = document.getElementById('games-grid');
+            grid.innerHTML = '';
+
+            const styles = [
+                { bg: 'bg-gradient-to-br from-pink-100 to-rose-50', iconBg: 'bg-pink-400', badgeBg: 'bg-pink-200 text-pink-900', btn: 'bg-pink-400 hover:bg-pink-500 text-white', icon: 'fa-server' },
+                { bg: 'bg-gradient-to-br from-amber-100 to-yellow-50', iconBg: 'bg-amber-400', badgeBg: 'bg-amber-200 text-amber-900', btn: 'bg-amber-400 hover:bg-amber-500 text-slate-900', icon: 'fa-diagram-project' },
+                { bg: 'bg-gradient-to-br from-cyan-100 to-sky-50', iconBg: 'bg-cyan-400', badgeBg: 'bg-cyan-200 text-cyan-900', btn: 'bg-cyan-400 hover:bg-cyan-500 text-slate-900', icon: 'fa-gauge-high' },
+                { bg: 'bg-gradient-to-br from-emerald-100 to-green-50', iconBg: 'bg-emerald-400', badgeBg: 'bg-emerald-200 text-emerald-900', btn: 'bg-emerald-400 hover:bg-emerald-500 text-slate-900', icon: 'fa-book-bookmark' }
+            ];
+
+            [1, 2, 3, 4].forEach((id, idx) => {
+                const gKey = `g${id}`;
+                const gInfo = gameData.missions ? gameData.missions[gKey] : null;
+                if (!gInfo) return;
+
+                const st = styles[idx];
+
+                const card = document.createElement('div');
+                card.className = `vector-card p-6 ${st.bg} border-4 border-darkBorder cursor-pointer flex gap-4 items-start group relative flex-col justify-between min-h-[220px]`;
+                card.onclick = () => app.startMiniGame(id);
+
+                card.innerHTML = `
+                    <div class="flex gap-4 items-start w-full">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 ${st.iconBg} border-3 border-darkBorder rounded-2xl flex items-center justify-center text-3xl sm:text-4xl text-darkBorder shadow-[3px_3px_0px_#2D3436] shrink-0 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid ${st.icon}"></i>
+                        </div>
+                        <div class="space-y-1 flex-1">
+                            <span class="${st.badgeBg} border border-darkBorder text-xs font-black px-2.5 py-0.5 rounded-full uppercase">${gInfo.subtitle}</span>
+                            <h3 class="heading-font text-xl sm:text-2xl font-bold text-slate-800">${gInfo.title}</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 font-bold leading-snug">${gInfo.description}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between w-full pt-3 border-t-2 border-slate-300/60">
+                        <span id="badge-g${id}" class="text-xs font-black px-2.5 py-1 rounded-full bg-slate-200 text-slate-600 border border-darkBorder">Не пройдено</span>
+                        <button class="vector-btn ${st.btn} px-4 py-1.5 text-xs font-extrabold flex items-center gap-1">
+                            <span>Старт</span>
+                            <i class="fa-solid fa-play text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        class SoundEngine {
+            constructor() { this.ctx = null; this.muted = false; }
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            }
+            playClick() {
+                if (this.muted) return; this.init(); if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.05);
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+                } catch(e){}
+            }
+            playSuccess() {
+                if (this.muted) return; this.init(); if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime; const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.08);
+                    osc.frequency.setValueAtTime(783.99, now + 0.16); osc.frequency.setValueAtTime(1046.50, now + 0.24);
+                    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now); osc.stop(now + 0.35);
+                } catch(e){}
+            }
+            playError() {
+                if (this.muted) return; this.init(); if (!this.ctx) return;
+                try {
+                    const now = this.ctx.currentTime; const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(220, now); osc.frequency.setValueAtTime(160, now + 0.1);
+                    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(now); osc.stop(now + 0.25);
+                } catch(e){}
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        function shuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        class AppController {
+            constructor() {
+                this.score = 0;
+                this.completedGames = new Set();
+                this.currentView = 'view-hub';
+            }
+
+            toggleSound() {
+                sound.muted = !sound.muted;
+                const btn = document.getElementById('sound-btn');
+                const icon = document.getElementById('sound-icon');
+                if (sound.muted) {
+                    icon.className = 'fa-solid fa-volume-xmark text-rose-600';
+                    btn.classList.remove('bg-sky-300');
+                    btn.classList.add('bg-slate-300');
+                } else {
+                    icon.className = 'fa-solid fa-volume-high text-slate-800';
+                    btn.classList.remove('bg-slate-300');
+                    btn.classList.add('bg-sky-300');
+                    sound.playClick();
+                }
+            }
+
+            addScore(pts) {
+                this.score += pts;
+                document.getElementById('total-score').innerText = this.score;
+            }
+
+            goHome() {
+                sound.playClick();
+                document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+                document.getElementById('view-hub').classList.remove('hidden');
+                this.currentView = 'view-hub';
+            }
+
+            async startMiniGame(gameId) {
+                sound.playClick();
+                if (!gameData) return;
+
+                document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+                const targetView = document.getElementById(`view-game-${gameId}`);
+                if (targetView) {
+                    targetView.classList.remove('hidden');
+                    this.currentView = `view-game-${gameId}`;
+                }
+
+                if (gameId === 1) g1.init();
+                if (gameId === 2) g2.init();
+                if (gameId === 3) g3.init();
+                if (gameId === 4) g4.init();
+            }
+
+            finishGame(gameId, earnedScore) {
+                this.completedGames.add(gameId);
+                this.addScore(earnedScore);
+                
+                const badge = document.getElementById(`badge-g${gameId}`);
+                if (badge) {
+                    badge.innerText = 'Виконано ✓';
+                    badge.className = 'text-xs font-black px-2.5 py-1 rounded-full bg-emerald-200 text-emerald-900 border border-darkBorder';
+                }
+
+                sound.playSuccess();
+                document.getElementById('modal-score').innerText = `+${earnedScore}`;
+                document.getElementById('modal-accuracy').innerText = '100%';
+                document.getElementById('victory-modal').classList.remove('hidden');
+            }
+
+            closeVictoryModal() {
+                sound.playClick();
+                document.getElementById('victory-modal').classList.add('hidden');
+                this.goHome();
+            }
+        }
+
+        const app = new AppController();
+
+        // GAME 1
+        const g1 = {
+            init() {
+                const data = gameData.missions.g1;
+                document.getElementById('g1-header-title').innerText = `${data.subtitle}: ${data.title}`;
+                document.getElementById('g1-header-desc').innerText = data.instruction;
+
+                const catKeys = Object.keys(data.categories);
+                this.cat1Key = catKeys[0];
+                this.cat2Key = catKeys[1];
+
+                const cat1 = data.categories[this.cat1Key];
+                const cat2 = data.categories[this.cat2Key];
+
+                document.getElementById('g1-cat1-title').innerText = cat1.title;
+                document.getElementById('g1-cat1-desc').innerText = cat1.desc;
+                document.getElementById('g1-cat1-icon').className = `fa-solid ${cat1.icon} text-xl`;
+
+                document.getElementById('g1-cat2-title').innerText = cat2.title;
+                document.getElementById('g1-cat2-desc').innerText = cat2.desc;
+                document.getElementById('g1-cat2-icon').className = `fa-solid ${cat2.icon} text-xl`;
+
+                this.items = data.items;
+                this.solved = 0;
+                this.selectedCardIndex = null;
+                this.deck = shuffle([...this.items]);
+                
+                document.getElementById('container-cat1').innerHTML = '';
+                document.getElementById('container-cat2').innerHTML = '';
+                document.getElementById('g1-progress').innerText = `0 / ${this.items.length}`;
+                
+                this.renderDeck();
+                this.setupDropzones();
+            },
+
+            renderDeck() {
+                const deckContainer = document.getElementById('g1-deck');
+                deckContainer.innerHTML = '';
+
+                this.deck.forEach((item, idx) => {
+                    const card = document.createElement('div');
+                    card.className = `vector-btn bg-white px-3.5 py-2.5 cursor-pointer flex items-center space-x-2 text-xs sm:text-sm font-bold text-slate-800 ${this.selectedCardIndex === idx ? 'selected-card' : ''}`;
+                    card.setAttribute('draggable', 'true');
+                    card.innerHTML = `<i class="fa-solid ${item.icon} text-indigo-600"></i> <span>${item.text}</span>`;
+                    
+                    card.onclick = () => { sound.playClick(); this.selectedCardIndex = idx; this.renderDeck(); };
+                    card.ondragstart = (e) => e.dataTransfer.setData('text/plain', idx);
+
+                    deckContainer.appendChild(card);
+                });
+
+                if (this.deck.length === 0 && this.solved === this.items.length) {
+                    setTimeout(() => app.finishGame(1, 150), 400);
+                }
+            },
+
+            setupDropzones() {
+                [
+                    { zoneId: 'drop-cat1', key: this.cat1Key, targetName: 'cat1' },
+                    { zoneId: 'drop-cat2', key: this.cat2Key, targetName: 'cat2' }
+                ].forEach(({ zoneId, key, targetName }) => {
+                    const zone = document.getElementById(zoneId);
+                    zone.onclick = () => { if (this.selectedCardIndex !== null) this.checkAnswer(this.selectedCardIndex, key, targetName); };
+                    zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('drag-active'); };
+                    zone.ondragleave = () => zone.classList.remove('drag-active');
+                    zone.ondrop = (e) => {
+                        e.preventDefault(); zone.classList.remove('drag-active');
+                        const idx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                        if (!isNaN(idx)) this.checkAnswer(idx, key, targetName);
+                    };
+                });
+            },
+
+            checkAnswer(deckIdx, expectedCategoryKey, targetName) {
+                const item = this.deck[deckIdx];
+                if (!item) return;
+
+                if (item.type === expectedCategoryKey) {
+                    sound.playSuccess();
+                    this.solved++;
+                    
+                    const container = document.getElementById(`container-${targetName}`);
+                    const badge = document.createElement('div');
+                    badge.className = `px-3 py-1.5 rounded-xl border-2 border-darkBorder ${targetName === 'cat1' ? 'bg-sky-200 text-sky-950' : 'bg-purple-200 text-purple-950'} text-xs font-black flex items-center space-x-1.5 pop-in shadow-[2px_2px_0px_#2D3436]`;
+                    badge.innerHTML = `<i class="fa-solid ${item.icon}"></i> <span>${item.text}</span>`;
+                    container.appendChild(badge);
+
+                    this.deck.splice(deckIdx, 1);
+                    this.selectedCardIndex = null;
+                    document.getElementById('g1-progress').innerText = `${this.solved} / ${this.items.length}`;
+                    this.renderDeck();
+                } else {
+                    sound.playError();
+                    const targetZone = document.getElementById(`drop-${targetName}`);
+                    targetZone.classList.add('wrong-flash');
+                    setTimeout(() => targetZone.classList.remove('wrong-flash'), 500);
+                }
+            }
+        };
+
+        // GAME 2
+        const g2 = {
+            init() {
+                const data = gameData.missions.g2;
+                document.getElementById('g2-header-title').innerText = `${data.subtitle}: ${data.title}`;
+                document.getElementById('g2-header-desc').innerText = data.instruction;
+                document.getElementById('g2-left-header').innerText = data.left_header;
+                document.getElementById('g2-right-header').innerText = data.right_header;
+
+                this.pairs = data.pairs;
+                this.selectedAction = null;
+                this.solvedCount = 0;
+                document.getElementById('g2-progress').innerText = `0 / ${this.pairs.length}`;
+
+                this.renderActions(shuffle([...this.pairs]));
+                this.renderTargets(shuffle([...this.pairs]));
+            },
+
+            renderActions(actions) {
+                const container = document.getElementById('g2-actions');
+                container.innerHTML = '';
+                actions.forEach(item => {
+                    const card = document.createElement('div');
+                    card.id = `g2-act-${item.id}`;
+                    card.className = 'vector-card p-4 bg-white cursor-pointer border-3 text-xs sm:text-sm font-extrabold text-slate-800 hover:bg-slate-50 flex items-center justify-between';
+                    card.innerHTML = `<span>${item.action}</span> <i class="fa-solid fa-circle-dot text-slate-400"></i>`;
+                    card.onclick = () => {
+                        if (card.classList.contains('opacity-40')) return;
+                        sound.playClick();
+                        this.selectedAction = item;
+                        document.querySelectorAll('#g2-actions > div').forEach(d => d.classList.remove('selected-card'));
+                        card.classList.add('selected-card');
+                    };
+                    container.appendChild(card);
+                });
+            },
+
+            renderTargets(targets) {
+                const container = document.getElementById('g2-targets');
+                container.innerHTML = '';
+                targets.forEach(item => {
+                    const card = document.createElement('div');
+                    card.id = `g2-tar-${item.id}`;
+                    card.className = 'vector-card p-4 bg-purple-100 cursor-pointer border-3 text-xs sm:text-sm font-black text-purple-900 flex items-center justify-between';
+                    card.innerHTML = `<span class="heading-font">${item.process}</span> <i class="fa-solid fa-arrow-right-to-bracket text-purple-600"></i>`;
+                    card.onclick = () => {
+                        if (card.classList.contains('opacity-40')) return;
+                        if (!this.selectedAction) { sound.playError(); return; }
+
+                        if (this.selectedAction.process === item.process) {
+                            sound.playSuccess();
+                            this.solvedCount++;
+                            document.getElementById('g2-progress').innerText = `${this.solvedCount} / ${this.pairs.length}`;
+
+                            const actEl = document.getElementById(`g2-act-${this.selectedAction.id}`);
+                            actEl.classList.add('opacity-40', 'pointer-events-none');
+                            actEl.classList.remove('selected-card');
+                            actEl.querySelector('i').className = 'fa-solid fa-circle-check text-emerald-600';
+
+                            card.classList.add('opacity-40', 'pointer-events-none');
+                            card.innerHTML = `<span class="line-through text-slate-500">${item.process}</span> <i class="fa-solid fa-check text-emerald-600"></i>`;
+                            this.selectedAction = null;
+
+                            if (this.solvedCount === this.pairs.length) {
+                                setTimeout(() => app.finishGame(2, 150), 400);
+                            }
+                        } else {
+                            sound.playError();
+                            card.classList.add('wrong-flash');
+                            setTimeout(() => card.classList.remove('wrong-flash'), 500);
+                        }
+                    };
+                    container.appendChild(card);
+                });
+            }
+        };
+
+        // GAME 3
+        const g3 = {
+            init() {
+                const data = gameData.missions.g3;
+                document.getElementById('g3-header-title').innerText = `${data.subtitle}: ${data.title}`;
+                document.getElementById('g3-header-desc').innerText = data.instruction;
+
+                this.pairs = data.pairs;
+                this.selectedDev = null;
+                this.solvedCount = 0;
+                document.getElementById('g3-progress').innerText = `0 / ${this.pairs.length}`;
+
+                this.renderDevices(shuffle([...this.pairs]));
+                this.renderMeasures(shuffle([...this.pairs]));
+            },
+
+            renderDevices(devs) {
+                const container = document.getElementById('g3-devices');
+                container.innerHTML = '';
+                devs.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'vector-card p-4 bg-white cursor-pointer border-3 text-sm font-extrabold text-slate-800 flex items-center space-x-3 hover:bg-slate-50';
+                    card.dataset.name = item.dev;
+                    card.innerHTML = `<div class="w-10 h-10 rounded-xl bg-emerald-200 border-2 border-darkBorder text-emerald-900 flex items-center justify-center shrink-0"><i class="fa-solid ${item.icon}"></i></div><span>${item.dev}</span>`;
+                    card.onclick = () => {
+                        if (card.classList.contains('opacity-40')) return;
+                        sound.playClick();
+                        document.querySelectorAll('#g3-devices > div').forEach(d => d.classList.remove('selected-card'));
+                        card.classList.add('selected-card');
+                        this.selectedDev = item;
+                    };
+                    container.appendChild(card);
+                });
+            },
+
+            renderMeasures(meas) {
+                const container = document.getElementById('g3-measures');
+                container.innerHTML = '';
+                meas.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'vector-card p-4 bg-emerald-100 cursor-pointer border-3 text-xs sm:text-sm font-bold text-emerald-950 flex items-center justify-between';
+                    card.dataset.name = item.dev;
+                    card.innerHTML = `<span>${item.meas}</span> <i class="fa-solid fa-link text-emerald-700"></i>`;
+                    card.onclick = () => {
+                        if (card.classList.contains('opacity-40')) return;
+                        if (!this.selectedDev) { sound.playError(); return; }
+
+                        if (this.selectedDev.dev === item.dev) {
+                            sound.playSuccess();
+                            this.solvedCount++;
+                            document.getElementById('g3-progress').innerText = `${this.solvedCount} / ${this.pairs.length}`;
+
+                            const devCard = document.querySelector(`#g3-devices > div[data-name="${CSS.escape(item.dev)}"]`);
+                            if (devCard) {
+                                devCard.classList.add('opacity-40', 'pointer-events-none');
+                                devCard.classList.remove('selected-card');
+                            }
+
+                            card.classList.add('opacity-40', 'pointer-events-none');
+                            card.querySelector('i').className = 'fa-solid fa-circle-check text-emerald-600';
+                            this.selectedDev = null;
+
+                            if (this.solvedCount === this.pairs.length) {
+                                setTimeout(() => app.finishGame(3, 150), 400);
+                            }
+                        } else {
+                            sound.playError();
+                            card.classList.add('wrong-flash');
+                            setTimeout(() => card.classList.remove('wrong-flash'), 500);
+                        }
+                    };
+                    container.appendChild(card);
+                });
+            }
+        };
+
+        // GAME 4 (Глосарій)
+        const g4 = {
+            init() {
+                const data = gameData.missions.g4;
+                document.getElementById('g4-header-title').innerText = `${data.subtitle}: ${data.title}`;
+                document.getElementById('g4-header-desc').innerText = data.instruction;
+
+                this.glossary = data.glossary;
+                this.selectedTerm = null;
+                this.solvedCount = 0;
+                document.getElementById('g4-progress').innerText = `0 / ${this.glossary.length}`;
+
+                this.renderTerms(shuffle([...this.glossary]));
+                this.renderDefs(shuffle([...this.glossary]));
+            },
+
+            renderTerms(terms) {
+                const container = document.getElementById('g4-terms');
+                container.innerHTML = '';
+                terms.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'vector-card p-4 bg-amber-100 cursor-pointer border-3 text-sm font-extrabold text-amber-950 flex items-center justify-between';
+                    card.dataset.term = item.term;
+                    card.innerHTML = `<span class="heading-font text-base">${item.term}</span> <i class="fa-solid fa-bookmark text-amber-600"></i>`;
+                    card.onclick = () => {
+                        if (card.classList.contains('opacity-40')) return;
+                        sound.playClick();
+                        document.querySelectorAll('#g4-terms > div').forEach(d => d.classList.remove('selected-card'));
+                        card.classList.add('selected-card');
+                        this.selectedTerm = item;
+                    };
+                    container.appendChild(card);
+                });
+            },
+
+            renderDefs(defs) {
+                const container = document.getElementById('g4-defs');
+                container.innerHTML = '';
+                defs.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'vector-card p-4 bg-white cursor-pointer border-3 text-xs sm:text-sm font-bold text-slate-800 flex items-center justify-between';
+                    card.dataset.term = item.term;
+                    card.innerHTML = `<span>${item.def}</span> <i class="fa-solid fa-check-double text-slate-400"></i>`;
+                    card.onclick = () => {
+                        if (card.classList.contains('opacity-40')) return;
+                        if (!this.selectedTerm) { sound.playError(); return; }
+
+                        if (this.selectedTerm.term === item.term) {
+                            sound.playSuccess();
+                            this.solvedCount++;
+                            document.getElementById('g4-progress').innerText = `${this.solvedCount} / ${this.glossary.length}`;
+
+                            const termCard = document.querySelector(`#g4-terms > div[data-term="${CSS.escape(item.term)}"]`);
+                            if (termCard) {
+                                termCard.classList.add('opacity-40', 'pointer-events-none');
+                                termCard.classList.remove('selected-card');
+                            }
+
+                            card.classList.add('opacity-40', 'pointer-events-none');
+                            card.querySelector('i').className = 'fa-solid fa-circle-check text-emerald-600';
+                            this.selectedTerm = null;
+
+                            if (this.solvedCount === this.glossary.length) {
+                                setTimeout(() => app.finishGame(4, 200), 400);
+                            }
+                        } else {
+                            sound.playError();
+                            card.classList.add('wrong-flash');
+                            setTimeout(() => card.classList.remove('wrong-flash'), 500);
+                        }
+                    };
+                    container.appendChild(card);
+                });
+            }
+        };
+
+        window.addEventListener('click', () => sound.init(), { once: true });
+        window.addEventListener('touchstart', () => sound.init(), { once: true });
+
+        loadGameData();
+    </script>
+</body>
+</html>
