@@ -218,25 +218,8 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div id="drop-cat1" class="glass-panel p-6 rounded-3xl border-2 border-dashed border-sky-500/30 min-h-[220px] flex flex-col items-center justify-start space-y-3 transition-all duration-300">
-                    <div class="flex items-center space-x-2 text-sky-400 font-bold text-lg">
-                        <i id="g1-cat1-icon" class="fa-solid text-xl"></i>
-                        <span id="g1-cat1-title">...</span>
-                    </div>
-                    <p id="g1-cat1-desc" class="text-xs text-slate-400 text-center">...</p>
-                    <div id="container-cat1" class="w-full flex flex-wrap gap-2 justify-center pt-2"></div>
-                </div>
-
-                <div id="drop-cat2" class="glass-panel p-6 rounded-3xl border-2 border-dashed border-purple-500/30 min-h-[220px] flex flex-col items-center justify-start space-y-3 transition-all duration-300">
-                    <div class="flex items-center space-x-2 text-purple-400 font-bold text-lg">
-                        <i id="g1-cat2-icon" class="fa-solid text-xl"></i>
-                        <span id="g1-cat2-title">...</span>
-                    </div>
-                    <p id="g1-cat2-desc" class="text-xs text-slate-400 text-center">...</p>
-                    <div id="container-cat2" class="w-full flex flex-wrap gap-2 justify-center pt-2"></div>
-                </div>
-            </div>
+            <!-- Динамічний контейнер для категорій (адаптується під 2, 3 або більше) -->
+            <div id="g1-categories-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
             <div class="glass-panel p-6 rounded-2xl flex flex-col items-center justify-center space-y-4">
                 <span class="text-xs font-semibold text-slate-400">КАРТКА ДЛЯ СОРТУВАННЯ:</span>
@@ -357,7 +340,6 @@
         let gameData = null;
 
         async function loadGameData() {
-            // Якщо параметр не вказаний
             if (!lessonParam) {
                 document.getElementById('banner-title').innerText = "Урок не вказано";
                 document.getElementById('banner-desc').innerText = "Будь ласка, вкажіть параметр ?lesson=номер_уроку у посиланні.";
@@ -370,7 +352,6 @@
                 return;
             }
 
-            // Автоматично додаємо .json, якщо користувач ввів лише назву/номер уроку
             const jsonFileName = lessonParam.endsWith('.json') ? lessonParam : `${lessonParam}.json`;
 
             try {
@@ -600,40 +581,90 @@
 
         const app = new AppController();
 
-        // GAME 1
+        // АДАПТИВНА GAME 1 (Динамічна кількість категорій)
         const g1 = {
             init() {
                 const data = gameData.missions.g1;
                 document.getElementById('g1-header-title').innerText = `${data.subtitle}: ${data.title}`;
                 document.getElementById('g1-header-desc').innerText = data.instruction;
 
-                // Універсальне отримання категорій
-                const catKeys = Object.keys(data.categories);
-                this.cat1Key = catKeys[0];
-                this.cat2Key = catKeys[1];
-
-                const cat1 = data.categories[this.cat1Key];
-                const cat2 = data.categories[this.cat2Key];
-
-                document.getElementById('g1-cat1-title').innerText = cat1.title;
-                document.getElementById('g1-cat1-desc').innerText = cat1.desc;
-                document.getElementById('g1-cat1-icon').className = `fa-solid ${cat1.icon} text-xl`;
-
-                document.getElementById('g1-cat2-title').innerText = cat2.title;
-                document.getElementById('g1-cat2-desc').innerText = cat2.desc;
-                document.getElementById('g1-cat2-icon').className = `fa-solid ${cat2.icon} text-xl`;
-
+                this.categories = data.categories;
                 this.items = data.items;
                 this.solved = 0;
                 this.selectedCardIndex = null;
                 this.deck = shuffle([...this.items]);
-                
-                document.getElementById('container-cat1').innerHTML = '';
-                document.getElementById('container-cat2').innerHTML = '';
+
                 document.getElementById('g1-progress').innerText = `0 / ${this.items.length}`;
-                
+
+                this.renderCategories();
                 this.renderDeck();
-                this.setupDropzones();
+            },
+
+            renderCategories() {
+                const container = document.getElementById('g1-categories-container');
+                container.innerHTML = '';
+
+                const catKeys = Object.keys(this.categories);
+
+                // Динамічно оптимізуємо кількість колонок сітки на екрані залежно від кількості категорій
+                if (catKeys.length === 2) {
+                    container.className = "grid grid-cols-1 md:grid-cols-2 gap-6";
+                } else if (catKeys.length >= 3) {
+                    container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+                }
+
+                // Палітра кольорів для почергового оформлення категорій
+                const colors = [
+                    { text: 'text-sky-400', border: 'border-sky-500/30', badgeBg: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
+                    { text: 'text-purple-400', border: 'border-purple-500/30', badgeBg: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+                    { text: 'text-emerald-400', border: 'border-emerald-500/30', badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+                    { text: 'text-amber-400', border: 'border-amber-500/30', badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-500/30' }
+                ];
+
+                catKeys.forEach((key, index) => {
+                    const cat = this.categories[key];
+                    const theme = colors[index % colors.length];
+
+                    const dropZone = document.createElement('div');
+                    dropZone.id = `drop-cat-${key}`;
+                    dropZone.className = `glass-panel p-6 rounded-3xl border-2 border-dashed ${theme.border} min-h-[220px] flex flex-col items-center justify-start space-y-3 transition-all duration-300 cursor-pointer`;
+
+                    dropZone.innerHTML = `
+                        <div class="flex items-center space-x-2 ${theme.text} font-bold text-lg">
+                            <i class="fa-solid ${cat.icon || 'fa-folder'} text-xl"></i>
+                            <span>${cat.title}</span>
+                        </div>
+                        <p class="text-xs text-slate-400 text-center">${cat.desc || ''}</p>
+                        <div id="container-cat-${key}" class="w-full flex flex-wrap gap-2 justify-center pt-2"></div>
+                    `;
+
+                    // Обробники подій Dropzone (Клік та Drag & Drop)
+                    dropZone.onclick = () => {
+                        if (this.selectedCardIndex !== null) {
+                            this.checkAnswer(this.selectedCardIndex, key);
+                        }
+                    };
+
+                    dropZone.ondragover = (e) => {
+                        e.preventDefault();
+                        dropZone.classList.add('drag-active');
+                    };
+
+                    dropZone.ondragleave = () => {
+                        dropZone.classList.remove('drag-active');
+                    };
+
+                    dropZone.ondrop = (e) => {
+                        e.preventDefault();
+                        dropZone.classList.remove('drag-active');
+                        const idx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                        if (!isNaN(idx)) {
+                            this.checkAnswer(idx, key);
+                        }
+                    };
+
+                    container.appendChild(dropZone);
+                });
             },
 
             renderDeck() {
@@ -644,9 +675,13 @@
                     const card = document.createElement('div');
                     card.className = `glass-card p-3 rounded-2xl cursor-pointer flex items-center space-x-2 border text-sm font-semibold text-slate-200 hover:border-sky-400 transition-all ${this.selectedCardIndex === idx ? 'selected-card' : ''}`;
                     card.setAttribute('draggable', 'true');
-                    card.innerHTML = `<i class="fa-solid ${item.icon} text-sky-400"></i> <span>${item.text}</span>`;
+                    card.innerHTML = `<i class="fa-solid ${item.icon || 'fa-cube'} text-sky-400"></i> <span>${item.text}</span>`;
                     
-                    card.onclick = () => { sound.playClick(); this.selectedCardIndex = idx; this.renderDeck(); };
+                    card.onclick = () => { 
+                        sound.playClick(); 
+                        this.selectedCardIndex = idx; 
+                        this.renderDeck(); 
+                    };
                     card.ondragstart = (e) => e.dataTransfer.setData('text/plain', idx);
 
                     deckContainer.appendChild(card);
@@ -657,35 +692,29 @@
                 }
             },
 
-            setupDropzones() {
-                [
-                    { zoneId: 'drop-cat1', key: this.cat1Key, targetName: 'cat1' },
-                    { zoneId: 'drop-cat2', key: this.cat2Key, targetName: 'cat2' }
-                ].forEach(({ zoneId, key, targetName }) => {
-                    const zone = document.getElementById(zoneId);
-                    zone.onclick = () => { if (this.selectedCardIndex !== null) this.checkAnswer(this.selectedCardIndex, key, targetName); };
-                    zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('drag-active'); };
-                    zone.ondragleave = () => zone.classList.remove('drag-active');
-                    zone.ondrop = (e) => {
-                        e.preventDefault(); zone.classList.remove('drag-active');
-                        const idx = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                        if (!isNaN(idx)) this.checkAnswer(idx, key, targetName);
-                    };
-                });
-            },
-
-            checkAnswer(deckIdx, expectedCategoryKey, targetName) {
+            checkAnswer(deckIdx, targetCategoryKey) {
                 const item = this.deck[deckIdx];
                 if (!item) return;
 
-                if (item.type === expectedCategoryKey) {
+                if (item.type === targetCategoryKey) {
                     sound.playSuccess();
                     this.solved++;
                     
-                    const container = document.getElementById(`container-${targetName}`);
+                    const catKeys = Object.keys(this.categories);
+                    const catIndex = catKeys.indexOf(targetCategoryKey);
+                    
+                    const colors = [
+                        'bg-sky-500/20 text-sky-300 border-sky-500/30',
+                        'bg-purple-500/20 text-purple-300 border-purple-500/30',
+                        'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+                        'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                    ];
+                    const colorStyle = colors[catIndex % colors.length];
+
+                    const container = document.getElementById(`container-cat-${targetCategoryKey}`);
                     const badge = document.createElement('div');
-                    badge.className = `px-3 py-1.5 rounded-xl ${targetName === 'cat1' ? 'bg-sky-500/20 text-sky-300 border-sky-500/30' : 'bg-purple-500/20 text-purple-300 border-purple-500/30'} border text-xs font-semibold flex items-center space-x-1.5 animate-glow`;
-                    badge.innerHTML = `<i class="fa-solid ${item.icon}"></i> <span>${item.text}</span>`;
+                    badge.className = `px-3 py-1.5 rounded-xl ${colorStyle} border text-xs font-semibold flex items-center space-x-1.5 animate-glow`;
+                    badge.innerHTML = `<i class="fa-solid ${item.icon || 'fa-check'}"></i> <span>${item.text}</span>`;
                     container.appendChild(badge);
 
                     this.deck.splice(deckIdx, 1);
@@ -694,9 +723,11 @@
                     this.renderDeck();
                 } else {
                     sound.playError();
-                    const targetZone = document.getElementById(`drop-${targetName}`);
-                    targetZone.classList.add('wrong-flash');
-                    setTimeout(() => targetZone.classList.remove('wrong-flash'), 500);
+                    const targetZone = document.getElementById(`drop-cat-${targetCategoryKey}`);
+                    if (targetZone) {
+                        targetZone.classList.add('wrong-flash');
+                        setTimeout(() => targetZone.classList.remove('wrong-flash'), 500);
+                    }
                 }
             }
         };
